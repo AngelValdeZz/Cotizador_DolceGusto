@@ -1,158 +1,110 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
     <title>Cotizador | Dolce Gusto</title>
-    <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #111; 
-            color: #fff;
-            padding: 20px; 
-            display: flex;
-            justify-content: center;
-        }
-        .contenedor {
-            background-color: #222;
-            padding: 25px;
-            border-radius: 15px;
-            width: 100%;
-            max-width: 450px;
-            box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
-            border-top: 5px solid #FFD700;
-        }
-        h2 { text-align: center; color: #FFD700; margin-bottom: 5px;}
-        p.subtitulo { text-align: center; color: #ccc; font-size: 14px; margin-bottom: 25px; }
-        label { font-weight: bold; color: #90EE90; display: block; margin-top: 15px; }
-        select { 
-            width: 100%; 
-            padding: 12px; 
-            margin: 8px 0; 
-            border-radius: 8px; 
-            border: 1px solid #444;
-            background-color: #333;
-            color: #fff;
-            font-size: 16px;
-        }
-        .total-box {
-            background-color: #FFD700;
-            color: #000;
-            text-align: center;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 25px;
-        }
-        .total-box h3 { margin: 0; font-size: 24px; }
-        button { 
-            width: 100%; 
-            background-color: #25D366; 
-            color: white; 
-            border: none; 
-            padding: 15px;
-            font-size: 16px;
-            font-weight: bold; 
-            border-radius: 8px;
-            cursor: pointer; 
-            margin-top: 20px;
-        }
-    </style>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Leaflet -->
+    <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 </head>
+
 <body>
 
     <div class="contenedor">
+
         <h2>Cotiza tu Evento 🌽</h2>
-        <p class="subtitulo">Selecciona las opciones para tu presupuesto</p>
 
+        <p class="subtitulo">
+            Selecciona las opciones para tu presupuesto
+        </p>
+
+        <!-- PERSONAS -->
         <label>1. ¿Cuántas personas son?</label>
-        <select id="cantidadPersonas" onchange="actualizarPaquetes()">
-            <option value="" disabled selected>Selecciona cantidad...</option>
-            <option value="50">50 Personas</option>
-            <option value="80">80 Personas</option>
+
+        <select id="cantidadPersonas"
+            onchange="actualizarPaquetes()">
+
+            <option value="0" disabled selected>
+                Selecciona cantidad...
+            </option>
+
         </select>
 
+        <!-- PAQUETES -->
         <label>2. Selecciona tu Paquete:</label>
-        <select id="paquete" onchange="calcularTotal()">
-            <option value="0">Primero elige el número de personas...</option>
+
+        <select id="paquete"
+            onchange="calcularTotal()">
+
+            <option value="0" disabled selected>
+                Primero elige el número de personas...
+            </option>
+
         </select>
 
-        <label>3. Ubicación del evento (Distancia):</label>
-        <select id="distancia" onchange="calcularTotal()">
-            <option value="0" disabled selected>Elige la distancia...</option>
-            <option value="300">1 a 10 km ($300)</option>
-            <option value="600">11 a 19 km ($600)</option>
-            <option value="850">20 a 29 km ($850)</option>
-            <option value="950">30 a 35 km ($950)</option>
-            <option value="1100">40 a 50 km ($1,100)</option>
-        </select>
+        <!-- UBICACIÓN -->
+        <label>
+            3. Busca o toca la ubicación del evento:
+        </label>
 
-        <div class="total-box">
-            <h3 id="resultadoTotal">Total: $0</h3>
+        <p class="texto-ayuda">
+            Puedes escribir una colonia,
+            salón, calle o tocar el mapa 📍
+        </p>
+
+        <!-- BUSCADOR -->
+        <input type="text"
+            id="buscadorDireccion"
+            placeholder="🔎 Busca la dirección del evento..."
+            autocomplete="off">
+
+        <div id="resultadosBusqueda"></div>
+
+        <!-- DIRECCIÓN -->
+        <div id="direccionSeleccionada">
+            📍 Ninguna ubicación seleccionada
         </div>
 
-        <button onclick="enviarWhatsApp()">Enviar Cotización por WhatsApp 📲</button>
+        <!-- MAPA -->
+        <div id="mapa"></div>
+
+        <!-- DISTANCIA -->
+        <div id="infoDistancia">
+            Distancia calculada: 0 km
+        </div>
+
+        <!-- TOTAL -->
+        <div class="total-box">
+
+            <h3 id="resultadoTotal">
+                Total: $0
+            </h3>
+
+        </div>
+
+        <!-- BOTÓN -->
+        <button onclick="enviarWhatsApp()">
+            Enviar Cotización por WhatsApp 📲
+        </button>
+
     </div>
 
-    <script>
-        // Definición de precios por paquete y personas
-        const precios = {
-            "50": [
-                { nombre: "P1: 25 Tostitos + 25 Elotes", precio: 3150 },
-                { nombre: "P2: 50 Tostitos", precio: 3650 },
-                { nombre: "P3: 50 Vasos de Elote", precio: 2700 }
-            ],
-            "80": [
-                { nombre: "P1: 40 Tostitos + 40 Elotes", precio: 4400 },
-                { nombre: "P2: 80 Tostitos", precio: 5200 },
-                { nombre: "P3: 80 Vasos de Elote", precio: 3600 }
-            ]
-        };
+    <!-- SCRIPT -->
+    <script src="script.js"></script>
 
-        function actualizarPaquetes() {
-            const personas = document.getElementById('cantidadPersonas').value;
-            const selectPaquete = document.getElementById('paquete');
-            
-            // Limpiar opciones anteriores
-            selectPaquete.innerHTML = '<option value="0" disabled selected>Elige un paquete...</option>';
-            
-            // Cargar nuevos paquetes
-            precios[personas].forEach(p => {
-                let option = document.createElement('option');
-                option.value = p.precio;
-                option.text = `${p.nombre} ($${p.precio.toLocaleString()})`;
-                selectPaquete.add(option);
-            });
-            
-            calcularTotal();
-        }
-
-        function calcularTotal() {
-            let precioPaquete = parseInt(document.getElementById('paquete').value) || 0;
-            let precioEnvio = parseInt(document.getElementById('distancia').value) || 0;
-            let total = precioPaquete + precioEnvio;
-            
-            document.getElementById('resultadoTotal').innerText = "Total: $" + total.toLocaleString('es-MX');
-            return total;
-        }
-
-        function enviarWhatsApp() {
-            let personas = document.getElementById('cantidadPersonas').value;
-            let selectPaquete = document.getElementById('paquete');
-            let textoPaquete = selectPaquete.options[selectPaquete.selectedIndex].text;
-            let selectDistancia = document.getElementById('distancia');
-            let textoDistancia = selectDistancia.options[selectDistancia.selectedIndex].text;
-            let total = calcularTotal();
-
-            if(!personas || total === 0) {
-                alert("Por favor completa todos los pasos.");
-                return;
-            }
-            
-            let mensaje = `¡Hola Dolce Gusto! 🌽✨%0A%0AQuiero cotizar para mi evento:%0A%0A👥 *Personas:* ${personas}%0A📦 *Paquete:* ${textoPaquete}%0A📍 *Distancia:* ${textoDistancia}%0A💰 *Total:* $${total.toLocaleString('es-MX')}%0A%0A¿Tienen disponibilidad?`;
-            
-            let numeroTelefono = "5281XXXXXXXX"; // REEMPLAZA CON TU NÚMERO
-            window.open(`https://wa.me/${numeroTelefono}?text=${mensaje}`, '_blank');
-        }
-    </script>
 </body>
+
 </html>
