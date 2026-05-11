@@ -113,6 +113,11 @@ function inicializarMapa(){
 }
 
 // BUSCADOR
+// API KEY GEOAPIFY
+const GEOAPIFY_API_KEY =
+"a4d20d7f69f54e168a8a8ce36bc0f7c5";
+
+// BUSCADOR
 inputBusqueda.addEventListener(
     "input",
     async function(){
@@ -128,7 +133,7 @@ inputBusqueda.addEventListener(
         }
 
         const url =
-`https://nominatim.openstreetmap.org/search?format=json&q=${texto}, Mexico&limit=5`;
+`https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(texto)}&filter=rect:-100.8,25.3,-99.8,26.1&bias=proximity:-100.3161,25.6866&limit=5&apiKey=${GEOAPIFY_API_KEY}`;
 
         try{
 
@@ -140,7 +145,11 @@ inputBusqueda.addEventListener(
 
             resultadosBusqueda.innerHTML = "";
 
-            if(data.length === 0){
+            // SIN RESULTADOS
+            if(
+                !data.features ||
+                data.features.length === 0
+            ){
 
                 resultadosBusqueda.innerHTML =
                 `<div class="resultado-item">
@@ -150,7 +159,8 @@ inputBusqueda.addEventListener(
                 return;
             }
 
-            data.forEach(lugar => {
+            // RESULTADOS
+            data.features.forEach(lugar => {
 
                 const item =
                 document.createElement("div");
@@ -158,12 +168,25 @@ inputBusqueda.addEventListener(
                 item.className =
                 "resultado-item";
 
+                const props =
+                lugar.properties;
+
                 item.innerHTML =
-                lugar.display_name;
+                `
+                <strong>
+                    ${props.name || 'Ubicación'}
+                </strong>
+                <br>
+                <small>
+                    ${props.formatted}
+                </small>
+                `;
 
                 item.onclick = function(){
 
-                    seleccionarLugar(lugar);
+                    seleccionarLugarGeoapify(
+                        lugar
+                    );
 
                 };
 
@@ -176,29 +199,36 @@ inputBusqueda.addEventListener(
 
             console.log(error);
 
+            resultadosBusqueda.innerHTML =
+            `<div class="resultado-item">
+                Error al buscar ubicación
+            </div>`;
         }
 
     }
 );
 
-// SELECCIONAR LUGAR
-function seleccionarLugar(lugar){
+// SELECCIONAR LUGAR GEOAPIFY
+function seleccionarLugarGeoapify(lugar){
 
     resultadosBusqueda.innerHTML = "";
 
+    const props =
+    lugar.properties;
+
     inputBusqueda.value =
-    lugar.display_name;
+    props.formatted;
 
     const lat =
-    parseFloat(lugar.lat);
+    lugar.geometry.coordinates[1];
 
     const lng =
-    parseFloat(lugar.lon);
+    lugar.geometry.coordinates[0];
 
     seleccionarUbicacion(
         lat,
         lng,
-        `📍 ${lugar.display_name}`
+        `📍 ${props.formatted}`
     );
 
 }
